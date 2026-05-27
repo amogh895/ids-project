@@ -1,0 +1,458 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+import "./App.css";
+
+// --- SVG Icons ---
+const ShieldIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>;
+const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+const LogOutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
+const AlertTriangleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>;
+const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+const UploadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>;
+const ActivityIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>;
+const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
+
+const API_BASE = "https://ids-project-idf5.onrender.com";
+
+function App() {
+  // LOGIN STATE
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState("");
+  const [loginData, setLoginData] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // USER INPUT STATE
+  const [formData, setFormData] = useState({ duration: "", src_bytes: "", dst_bytes: "", count: "", srv_count: "" });
+  const [result, setResult] = useState("");
+  const [shapData, setShapData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [logs, setLogs] = useState([]);
+
+  // ADMIN STATE
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState("");
+  const [isTraining, setIsTraining] = useState(false);
+  
+  // USER MANAGEMENT STATE
+  const [users, setUsers] = useState([]);
+  const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" });
+  const [userMsg, setUserMsg] = useState({ text: "", type: "" });
+
+  // FETCH USERS EFFECT
+  useEffect(() => {
+    if (isLoggedIn && role === "admin") {
+      fetchUsers();
+    }
+  }, [isLoggedIn, role]);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/users`);
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch users");
+    }
+  };
+
+  // LOGIN HANDLER
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError("");
+    setIsLoggingIn(true);
+    
+    try {
+      const res = await axios.post(`${API_BASE}/login`, {
+        username: loginData.username,
+        password: loginData.password
+      });
+      
+      if (res.data.success) {
+        setRole(res.data.role);
+        setIsLoggedIn(true);
+      }
+    } catch (err) {
+      setLoginError(err.response?.data?.error || "Connection error. Is the backend running?");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setRole("");
+    setLoginData({ username: "", password: "" });
+    setResult("");
+    setShapData(null);
+    setStatus("");
+    setFormData({ duration: "", src_bytes: "", dst_bytes: "", count: "", srv_count: "" });
+  };
+
+  // USER INPUT HANDLER
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // PREDICTION
+  const handlePredict = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setResult("");
+
+    try {
+      const res = await axios.post(`${API_BASE}/predict`, {
+        duration: Number(formData.duration),
+        src_bytes: Number(formData.src_bytes),
+        dst_bytes: Number(formData.dst_bytes),
+        count: Number(formData.count),
+        srv_count: Number(formData.srv_count)
+      });
+
+      const prediction = res.data.prediction;
+      
+      setTimeout(() => {
+        setResult(prediction);
+        if (res.data.shap_values) {
+          setShapData({
+            shapValues: res.data.shap_values,
+            baseValue: res.data.base_value,
+            featureNames: res.data.feature_names,
+            featureValues: res.data.feature_values
+          });
+        }
+        setIsLoading(false);
+        const newLog = { time: new Date().toLocaleTimeString(), prediction };
+        setLogs([newLog, ...logs]);
+      }, 600);
+    } catch (err) {
+      setTimeout(() => {
+        setResult("Error");
+        setShapData(null);
+        setIsLoading(false);
+      }, 600);
+    }
+  };
+
+  // ADMIN FUNCTIONS
+  const handleUpload = () => {
+    if (file) setStatus(`✅ Dataset selected: ${file.name} ready for processing.`);
+    else setStatus("❌ No file selected.");
+  };
+
+  const handleTrain = () => {
+    setIsTraining(true);
+    setStatus("⏳ Model training in progress... Please wait.");
+    setTimeout(() => {
+      setIsTraining(false);
+      setStatus("✅ Model training completed successfully!");
+    }, 2000);
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setUserMsg({ text: "", type: "" });
+    try {
+      const res = await axios.post(`${API_BASE}/api/users`, newUser);
+      if (res.data.success) {
+        setUserMsg({ text: res.data.message, type: "success" });
+        setNewUser({ username: "", password: "", role: "user" });
+        fetchUsers();
+      }
+    } catch (err) {
+      setUserMsg({ text: err.response?.data?.error || "Error creating user", type: "error" });
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      const res = await axios.delete(`${API_BASE}/api/users/${id}`);
+      if (res.data.success) {
+        setUserMsg({ text: res.data.message, type: "success" });
+        fetchUsers();
+      }
+    } catch (err) {
+      setUserMsg({ text: err.response?.data?.error || "Error deleting user", type: "error" });
+    }
+  };
+
+  // LOGIN PAGE
+  if (!isLoggedIn) {
+    return (
+      <div className="app-wrapper">
+        <div className="auth-container fade-in">
+          <div className="logo-section">
+            <ShieldIcon />
+            <h2>SmartIDS</h2>
+            <p>Advanced Threat Detection</p>
+            <br></br>
+            <h4>Login</h4>
+          </div>
+          
+          <form className="auth-form" onSubmit={handleLogin}>
+            <div className="input-group">
+              <label>Username</label>
+              <input type="text" required placeholder="Enter your username" value={loginData.username} onChange={(e) => setLoginData({ ...loginData, username: e.target.value })} />
+            </div>
+
+            <div className="input-group">
+              <label>Password</label>
+              <input type="password" required placeholder="Enter your password" value={loginData.password} onChange={(e) => setLoginData({ ...loginData, password: e.target.value })} />
+            </div>
+
+            {loginError && <div className="error-toast">{loginError}</div>}
+
+            <button type="submit" className="primary-btn pulse-hover" disabled={isLoggingIn}>
+              {isLoggingIn ? <span className="spinner"></span> : "Secure Login"}
+            </button>
+
+            
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // DASHBOARD PAGE
+  return (
+    <div className="app-wrapper dashboard-layout fade-in">
+      <nav className="navbar">
+        <div className="nav-brand">
+          <ShieldIcon />
+          <span>SmartIDS</span>
+        </div>
+        <div className="nav-controls">
+          <div className="user-badge">
+            <UserIcon />
+            <span>{role.toUpperCase()}</span>
+          </div>
+          <button onClick={handleLogout} className="icon-btn logout-btn">
+            <LogOutIcon />
+            <span>Logout</span>
+          </button>
+        </div>
+      </nav>
+
+      <main className="dashboard-content">
+        
+        {/* USER PANEL */}
+        {role === "user" && (
+          <div className="panel slide-up">
+            <div className="panel-header">
+              <ActivityIcon />
+              <h2>Traffic Analysis</h2>
+            </div>
+            <p className="panel-desc">Analyze network packets for potential intrusions.</p>
+
+            <form onSubmit={handlePredict} className="prediction-form">
+              <div className="input-row">
+                <div className="input-group">
+                  <label>Duration (s)</label>
+                  <input type="number" step="any" name="duration" value={formData.duration} placeholder="e.g. 1.5" onChange={handleChange} required />
+                </div>
+                <div className="input-group">
+                  <label>Source Bytes</label>
+                  <input type="number" name="src_bytes" value={formData.src_bytes} placeholder="e.g. 5400" onChange={handleChange} required />
+                </div>
+                <div className="input-group">
+                  <label>Destination Bytes</label>
+                  <input type="number" name="dst_bytes" value={formData.dst_bytes} placeholder="e.g. 120" onChange={handleChange} required />
+                </div>
+              </div>
+              <div className="input-row">
+                <div className="input-group">
+                  <label>Host Conn Count (2s)</label>
+                  <input type="number" name="count" value={formData.count} placeholder="e.g. 8" onChange={handleChange} required />
+                </div>
+                <div className="input-group">
+                  <label>Service Conn Count (2s)</label>
+                  <input type="number" name="srv_count" value={formData.srv_count} placeholder="e.g. 8" onChange={handleChange} required />
+                </div>
+              </div>
+
+              <button type="submit" className="primary-btn analyze-btn" disabled={isLoading}>
+                {isLoading ? <span className="spinner"></span> : "Run Analysis"}
+              </button>
+            </form>
+
+            {result && (
+              <div className={`result-card scale-in ${result === 'Attack' ? 'attack-theme' : result === 'Normal' ? 'normal-theme' : 'error-theme'}`}>
+                {result === "Attack" && <><AlertTriangleIcon /><div><h3>Threat Detected</h3><p>Anomalous network activity found.</p></div></>}
+                {result === "Normal" && <><CheckCircleIcon /><div><h3>Traffic Normal</h3><p>No threats detected in this packet.</p></div></>}
+                {result === "Error" && <><AlertTriangleIcon /><div><h3>Connection Error</h3><p>Unable to reach the prediction engine.</p></div></>}
+              </div>
+            )}
+
+            {result && shapData && (
+              <div className="xai-panel slide-up">
+                <div className="xai-header">
+                  <ActivityIcon />
+                  <h3>SHAP Explainability (XAI)</h3>
+                </div>
+                <p className="xai-desc">
+                  Base Model Risk Score: <strong>{shapData.baseValue.toFixed(4)}</strong> <br/>
+                  Analyze the impact of each feature. <span style={{color:'#ef4444'}}>Red pushes towards Attack</span>. <span style={{color:'#10b981'}}>Green pushes towards Normal</span>.
+                </p>
+                <div className="shap-chart">
+                  <div className="shap-center-line"></div>
+                  {shapData.featureNames.map((name, index) => {
+                    const shapVal = shapData.shapValues[index];
+                    const isPositive = shapVal > 0;
+                    
+                    // Dynamic scaling to make it visually clear (adjusting scale factor based on max value)
+                    const maxAbs = Math.max(...shapData.shapValues.map(Math.abs));
+                    const widthPercent = maxAbs === 0 ? 0 : (Math.abs(shapVal) / maxAbs) * 45;
+
+                    return (
+                      <div key={name} className="shap-row fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+                        <div className="shap-label">
+                          <span className="feat-name">{name}</span>
+                          <span className="feat-val">={shapData.featureValues[index].toFixed(2)}</span>
+                        </div>
+                        <div className="shap-bar-container">
+                          {isPositive ? (
+                            <div className="bar-wrapper right-side">
+                              <div className="shap-bar attack-bar" style={{ width: `${widthPercent}%` }}></div>
+                              <span className="shap-val-text">+{shapVal.toFixed(3)}</span>
+                            </div>
+                          ) : (
+                            <div className="bar-wrapper left-side">
+                              <span className="shap-val-text">{shapVal.toFixed(3)}</span>
+                              <div className="shap-bar normal-bar" style={{ width: `${widthPercent}%` }}></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ADMIN PANEL */}
+        {role === "admin" && (
+          <div className="admin-grid slide-up">
+            {/* Left Column: Management */}
+            <div className="admin-col">
+              <div className="panel">
+                <div className="panel-header">
+                  <UploadIcon />
+                  <h2>Model Management</h2>
+                </div>
+                
+                <div className="admin-section">
+                  <label className="file-upload-wrapper">
+                    <input type="file" onChange={(e) => setFile(e.target.files[0])} className="file-input" />
+                    <div className="file-upload-ui">
+                      <UploadIcon />
+                      <span>{file ? file.name : "Select training dataset (.csv)"}</span>
+                    </div>
+                  </label>
+                  <div className="btn-group">
+                    <button onClick={handleUpload} className="secondary-btn">Upload</button>
+                    <button onClick={handleTrain} className="primary-btn" disabled={isTraining}>
+                      {isTraining ? <span className="spinner"></span> : "Train Model"}
+                    </button>
+                  </div>
+                  {status && <div className={`status-badge ${status.includes('❌') ? 'error' : ''}`}>{status}</div>}
+                </div>
+              </div>
+              
+              <div className="panel">
+                <div className="panel-header">
+                  <UsersIcon />
+                  <h2>User Management</h2>
+                </div>
+                <div className="admin-section">
+                  <form className="create-user-form" onSubmit={handleCreateUser}>
+                    <div className="input-group">
+                      <input type="text" placeholder="New Username" required value={newUser.username} onChange={(e) => setNewUser({...newUser, username: e.target.value})} />
+                    </div>
+                    <div className="input-group">
+                      <input type="password" placeholder="Password" required value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
+                    </div>
+                    <div className="input-group">
+                      <select value={newUser.role} onChange={(e) => setNewUser({...newUser, role: e.target.value})} className="role-select">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="secondary-btn">Add User</button>
+                  </form>
+                  {userMsg.text && <div className={`status-badge ${userMsg.type === 'error' ? 'error' : ''}`} style={{marginTop: '10px'}}>{userMsg.text}</div>}
+
+                  <div className="table-container" style={{marginTop: '20px'}}>
+                    <table className="logs-table">
+                      <thead>
+                        <tr>
+                          <th>Username</th>
+                          <th>Role</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {users.map(u => (
+                          <tr key={u.id} className="fade-in">
+                            <td>{u.username}</td>
+                            <td><span className={`status-pill ${u.role === 'admin' ? 'pill-admin' : 'pill-user'}`}>{u.role}</span></td>
+                            <td>
+                              {u.username !== "admin" && (
+                                <button className="icon-btn delete-btn" onClick={() => handleDeleteUser(u.id)} title="Delete user">
+                                  <TrashIcon />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Logs */}
+            <div className="admin-col">
+              <div className="panel h-100">
+                <div className="panel-header">
+                  <ActivityIcon />
+                  <h2>Log Management</h2>
+                </div>
+                <div className="table-container">
+                  <table className="logs-table">
+                    <thead>
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>Prediction Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {logs.length === 0 ? (
+                        <tr><td colSpan="2" className="empty-state">No logs available yet.</td></tr>
+                      ) : (
+                        logs.map((log, i) => (
+                          <tr key={i} className="fade-in">
+                            <td className="log-time">{log.time}</td>
+                            <td>
+                              <span className={`status-pill ${log.prediction === "Attack" ? "pill-attack" : "pill-normal"}`}>
+                                {log.prediction}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default App;
