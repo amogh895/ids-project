@@ -2,9 +2,16 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+import joblib
+import numpy as np
+from collections import deque
+import shap
 
 app = Flask(__name__)
 CORS(app)
+
+# Rolling window for source bytes
+recent_src_bytes = deque(maxlen=10)
 
 # =========================
 # DATABASE CONFIGURATION
@@ -117,7 +124,7 @@ def delete_user(user_id):
 
 
 # =========================
-# PREDICT API (DUMMY LOGIC)
+# PREDICT API
 # =========================
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -127,15 +134,65 @@ def predict():
         duration = float(data["duration"])
         src_bytes = int(data["src_bytes"])
         dst_bytes = int(data["dst_bytes"])
+        count = int(data.get("count", 0))
+        srv_count = int(data.get("srv_count", 0))
 
-        # 🔥 SMART DUMMY LOGIC (FOR DEMO)
-        if src_bytes > 5000 or dst_bytes < 50 or duration > 100:
-            result = "Attack"
+        # Update rolling window
+        recent_src_bytes.append(src_bytes)
+        
+        # Calculate rolling mean and std
+        src_bytes_roll_mean = float(np.mean(recent_src_bytes))
+        src_bytes_roll_std = float(np.std(recent_src_bytes)) if len(recent_src_bytes) > 1 else 0.0
+        
+        # Calculate trend (difference from previous packet)
+        src_bytes_trend = float(recent_src_bytes[-1] - recent_src_bytes[-2]) if len(recent_src_bytes) > 1 else 0.0
+
+        # Try to load the trained model
+        model_path = os.path.join(basedir, "models", "model.pkl")
+        
+        # Default empty explainability data
+        shap_data = None
+        base_value = 0
+        feature_names = ["Duration", "Src Bytes", "Dst Bytes", "Host Count", "Srv Count", "Roll Mean", "Roll Std", "Trend"]
+        feature_values = [duration, src_bytes, dst_bytes, count, srv_count, src_bytes_roll_mean, src_bytes_roll_std, src_bytes_trend]
+
+        if os.path.exists(model_path):
+            model = joblib.load(model_path)
+            prediction = model.predict([feature_values])
+            result = "Attack" if prediction[0] == 1 else "Normal"
+            
+            # SHAP Explainability
+            explainer = shap.TreeExplainer(model)
+            shap_values_obj = explainer.shap_values([feature_values])
+            
+            # Extract values for the 'Attack' class (index 1) if binary classification list
+            if isinstance(shap_values_obj, list):
+                shap_data = shap_values_obj[1][0].tolist()
+            else:
+                # Some versions/models return a 3D array or 2D array
+                if len(shap_values_obj.shape) == 3:
+                    shap_data = shap_values_obj[0, :, 1].tolist()
+                else:
+                    shap_data = shap_values_obj[0].tolist()
+                    
+            if isinstance(explainer.expected_value, (list, np.ndarray)):
+                base_value = float(explainer.expected_value[1] if len(explainer.expected_value) > 1 else explainer.expected_value[0])
+            else:
+                base_value = float(explainer.expected_value)
+                
         else:
-            result = "Normal"
+            # 🔥 SMART DUMMY LOGIC (FOR DEMO)
+            if src_bytes > 5000 or dst_bytes < 50 or duration > 100 or count > 50 or srv_count > 50:
+                result = "Attack"
+            else:
+                result = "Normal"
 
         return jsonify({
-            "prediction": result
+            "prediction": result,
+            "shap_values": shap_data,
+            "base_value": base_value,
+            "feature_names": feature_names,
+            "feature_values": feature_values
         })
 
     except Exception as e:
