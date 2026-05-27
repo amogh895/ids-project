@@ -65,3 +65,7 @@ python app.py
 cd frontend
 npm install
 npm run dev
+
+## Live Demo
+
+[Click Here to Open Project] (https://ids-project-delta.vercel.app)
