@@ -8,10 +8,11 @@ It uses a simple intelligent logic (can be extended to machine learning) to anal
 
 ##  Objective
 The main goal of this project is to:
-- Detect suspicious network behavior
-- Classify traffic into Normal or Attack
-- Provide a simple and interactive interface for users
-- Demonstrate the working of an IDS system
+
+- Detect and analyze suspicious network activities using Machine Learning techniques
+- Classify network traffic into categories such as Normal, DoS (Denial of Service), Probe (Network Scan), R2L (Unauthorized    Access), and U2R (Privilege Escalation)
+- Identify potential cyber threats and abnormal behavior in network traffic
+- Provide a simple, interactive, and user-friendly interface for attack detection and monitoring
 
 ---
 
@@ -21,6 +22,8 @@ The main goal of this project is to:
   - Duration
   - Source Bytes
   - Destination Bytes
+  - Host Connection Count
+  - Service Connection Count 
 -  Instant prediction (Normal / Attack)
 -  Alert message for attacks
 -  Admin panel (UI-based controls)
