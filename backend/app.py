@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 import joblib
 import numpy as np
 from collections import deque
-import shap
 
 app = Flask(__name__)
 CORS(app)
@@ -150,9 +149,6 @@ def predict():
         # Try to load the trained model
         model_path = os.path.join(basedir, "models", "model.pkl")
         
-        # Default empty explainability data
-        shap_data = None
-        base_value = 0
         feature_names = ["Duration", "Src Bytes", "Dst Bytes", "Host Count", "Srv Count", "Roll Mean", "Roll Std", "Trend"]
         feature_values = [duration, src_bytes, dst_bytes, count, srv_count, src_bytes_roll_mean, src_bytes_roll_std, src_bytes_trend]
 
@@ -161,35 +157,6 @@ def predict():
             features_arr = np.array([feature_values])
             prediction = model.predict(features_arr)
             result = "Attack" if prediction[0] == 1 else "Normal"
-            
-            # SHAP Explainability
-            explainer = shap.TreeExplainer(model)
-            shap_values_obj = explainer.shap_values(features_arr)
-            
-            # Extract values for the 'Attack' class (index 1) if binary classification list
-            if isinstance(shap_values_obj, list):
-                arr = shap_values_obj[1] if len(shap_values_obj) > 1 else shap_values_obj[0]
-                if hasattr(arr, "ndim") and arr.ndim > 1:
-                    shap_data = arr[0].tolist()
-                elif isinstance(arr, list) and len(arr) > 0 and isinstance(arr[0], list):
-                    shap_data = arr[0]
-                else:
-                    shap_data = getattr(arr, "tolist", lambda: list(arr))()
-            elif hasattr(shap_values_obj, "ndim"):
-                if shap_values_obj.ndim == 3:
-                    shap_data = shap_values_obj[0, :, 1].tolist()
-                elif shap_values_obj.ndim == 2:
-                    shap_data = shap_values_obj[0].tolist()
-                else:
-                    shap_data = shap_values_obj.tolist()
-            else:
-                shap_data = getattr(shap_values_obj, "tolist", lambda: list(shap_values_obj))()
-                    
-            if isinstance(explainer.expected_value, (list, np.ndarray)):
-                base_value = float(explainer.expected_value[1] if len(explainer.expected_value) > 1 else explainer.expected_value[0])
-            else:
-                base_value = float(explainer.expected_value)
-                
         else:
             # 🔥 SMART DUMMY LOGIC (FOR DEMO)
             if src_bytes > 5000 or dst_bytes < 50 or duration > 100 or count > 50 or srv_count > 50:
@@ -199,8 +166,6 @@ def predict():
 
         return jsonify({
             "prediction": result,
-            "shap_values": shap_data,
-            "base_value": base_value,
             "feature_names": feature_names,
             "feature_values": feature_values
         })

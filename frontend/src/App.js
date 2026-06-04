@@ -26,7 +26,6 @@ function App() {
   // USER INPUT STATE
   const [formData, setFormData] = useState({ duration: "", src_bytes: "", dst_bytes: "", count: "", srv_count: "" });
   const [result, setResult] = useState("");
-  const [shapData, setShapData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState([]);
 
@@ -96,7 +95,6 @@ function App() {
     setRole("");
     setLoginData({ username: "", password: "" });
     setResult("");
-    setShapData(null);
     setFormData({ duration: "", src_bytes: "", dst_bytes: "", count: "", srv_count: "" });
   };
 
@@ -128,14 +126,6 @@ function App() {
       
       setTimeout(() => {
         setResult(prediction);
-        if (res.data.shap_values) {
-          setShapData({
-            shapValues: res.data.shap_values,
-            baseValue: res.data.base_value,
-            featureNames: res.data.feature_names,
-            featureValues: res.data.feature_values
-          });
-        }
         setIsLoading(false);
         const newLog = { time: new Date().toLocaleTimeString(), prediction };
         setLogs([newLog, ...logs]);
@@ -144,7 +134,6 @@ function App() {
       const errMsg = err.message || "Connection error. Unable to reach prediction engine.";
       setTimeout(() => {
         setResult("Error: " + errMsg);
-        setShapData(null);
         setIsLoading(false);
       }, 600);
     }
@@ -286,51 +275,7 @@ function App() {
               </div>
             )}
 
-            {result && shapData && (
-              <div className="xai-panel slide-up">
-                <div className="xai-header">
-                  <ActivityIcon />
-                  <h3>SHAP Explainability (XAI)</h3>
-                </div>
-                <p className="xai-desc">
-                  Base Model Risk Score: <strong>{shapData.baseValue.toFixed(4)}</strong> <br/>
-                  Analyze the impact of each feature. <span style={{color:'#ef4444'}}>Red pushes towards Attack</span>. <span style={{color:'#10b981'}}>Green pushes towards Normal</span>.
-                </p>
-                <div className="shap-chart">
-                  <div className="shap-center-line"></div>
-                  {shapData.featureNames.map((name, index) => {
-                    const shapVal = shapData.shapValues[index];
-                    const isPositive = shapVal > 0;
-                    
-                    // Dynamic scaling to make it visually clear (adjusting scale factor based on max value)
-                    const maxAbs = Math.max(...shapData.shapValues.map(Math.abs));
-                    const widthPercent = maxAbs === 0 ? 0 : (Math.abs(shapVal) / maxAbs) * 45;
 
-                    return (
-                      <div key={name} className="shap-row fade-in" style={{animationDelay: `${index * 0.1}s`}}>
-                        <div className="shap-label">
-                          <span className="feat-name">{name}</span>
-                          <span className="feat-val">={shapData.featureValues[index].toFixed(2)}</span>
-                        </div>
-                        <div className="shap-bar-container">
-                          {isPositive ? (
-                            <div className="bar-wrapper right-side">
-                              <div className="shap-bar attack-bar" style={{ width: `${widthPercent}%` }}></div>
-                              <span className="shap-val-text">+{shapVal.toFixed(3)}</span>
-                            </div>
-                          ) : (
-                            <div className="bar-wrapper left-side">
-                              <span className="shap-val-text">{shapVal.toFixed(3)}</span>
-                              <div className="shap-bar normal-bar" style={{ width: `${widthPercent}%` }}></div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
