@@ -50,7 +50,7 @@ The main goal of this project is to:
 ![Normal](screenshots/Prediction(Normal).png)
 
 ###  Attack Detection
-![Attack](screenshots/Prediction(Threat).png)
+![Attack](screenshots/User_dashboard.png)
 
 ###  Admin Panel
 ![Admin](screenshots/admin_dashboard.png)
