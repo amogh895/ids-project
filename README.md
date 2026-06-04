@@ -50,7 +50,7 @@ The main goal of this project is to:
 ![Attack](screenshots/Prediction(Threat).png)
 
 ###  Admin Panel
-![Admin](screenshots/AdminDashboard.png)
+![Admin](screenshots/admin_dashboard.png)
 
 ---
 
