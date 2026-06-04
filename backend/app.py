@@ -156,11 +156,25 @@ def predict():
             model = joblib.load(model_path)
             features_arr = np.array([feature_values])
             prediction = model.predict(features_arr)
-            result = "Attack" if prediction[0] == 1 else "Normal"
+            pred_class = str(prediction[0]).upper()
+            mapping = {
+                'NORMAL': 'Normal',
+                'DOS': 'DoS (Denial of Service)',
+                'PROBE': 'Probe (Network Scan)',
+                'R2L': 'R2L (Unauthorized Access)',
+                'U2R': 'U2R (Privilege Escalation)'
+            }
+            result = mapping.get(pred_class, pred_class.title())
         else:
             # 🔥 SMART DUMMY LOGIC (FOR DEMO)
-            if src_bytes > 5000 or dst_bytes < 50 or duration > 100 or count > 50 or srv_count > 50:
-                result = "Attack"
+            if count > 50 or srv_count > 50:
+                result = "DoS (Denial of Service)"
+            elif src_bytes > 5000:
+                result = "R2L (Unauthorized Access)"
+            elif duration > 100:
+                result = "Probe (Network Scan)"
+            elif dst_bytes < 10 and dst_bytes > 0:
+                result = "U2R (Privilege Escalation)"
             else:
                 result = "Normal"
 

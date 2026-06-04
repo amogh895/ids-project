@@ -31,16 +31,16 @@ function App() {
 
   // SECURITY STATS CALCULATION
   const totalPackets = logs.length;
-  const totalAttacks = logs.filter(l => l.prediction === "Attack").length;
   const totalNormal = logs.filter(l => l.prediction === "Normal").length;
+  const totalAttacks = logs.filter(l => l.prediction !== "Normal" && !l.prediction.startsWith("Error")).length;
   
   let systemStatus = "MONITORING";
   let systemStatusColor = "var(--text-muted)";
   if (logs.length > 0) {
-    if (logs[0].prediction === "Attack") {
+    if (logs[0].prediction !== "Normal" && !logs[0].prediction.startsWith("Error")) {
       systemStatus = "THREAT ALERT";
       systemStatusColor = "var(--danger)";
-    } else {
+    } else if (logs[0].prediction === "Normal") {
       systemStatus = "SECURE";
       systemStatusColor = "var(--success)";
     }
@@ -268,10 +268,12 @@ function App() {
             </form>
 
             {result && (
-              <div className={`result-card scale-in ${result === 'Attack' ? 'attack-theme' : result === 'Normal' ? 'normal-theme' : 'error-theme'}`}>
-                {result === "Attack" && <><AlertTriangleIcon /><div><h3>Threat Detected</h3><p>Anomalous network activity found.</p></div></>}
+              <div className={`result-card scale-in ${result === 'Normal' ? 'normal-theme' : result.startsWith('Error') ? 'error-theme' : 'attack-theme'}`}>
                 {result === "Normal" && <><CheckCircleIcon /><div><h3>Traffic Normal</h3><p>No threats detected in this packet.</p></div></>}
                 {result.startsWith("Error") && <><AlertTriangleIcon /><div><h3>Analysis Failed</h3><p>{result === "Error" ? "Unable to reach the prediction engine." : result.replace("Error: ", "")}</p></div></>}
+                {result !== "Normal" && !result.startsWith("Error") && (
+                  <><AlertTriangleIcon /><div><h3>Threat Detected: {result}</h3><p>Anomalous network activity matching attack signature flagged.</p></div></>
+                )}
               </div>
             )}
 
@@ -395,7 +397,7 @@ function App() {
                           <tr key={i} className="fade-in">
                             <td className="log-time">{log.time}</td>
                             <td>
-                              <span className={`status-pill ${log.prediction === "Attack" ? "pill-attack" : "pill-normal"}`}>
+                              <span className={`status-pill ${log.prediction === "Normal" ? "pill-normal" : log.prediction.startsWith("Error") ? "pill-user" : "pill-attack"}`}>
                                 {log.prediction}
                               </span>
                             </td>

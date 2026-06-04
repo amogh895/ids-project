@@ -19,10 +19,19 @@ data['src_bytes_trend'] = data[4].diff().fillna(0)
 # duration (0), src_bytes (4), dst_bytes (5), count (22), srv_count (23)
 X = data[[0, 4, 5, 22, 23, 'src_bytes_roll_mean', 'src_bytes_roll_std', 'src_bytes_trend']].copy()
 X.columns = X.columns.astype(str)
-y = data.iloc[:, -1]
+y = data[41]
 
-# Convert labels
-y = y.apply(lambda x: 0 if x == 'normal.' else 1)
+# Load attack type mapping
+attack_mapping_path = os.path.join(base_dir, "..", "dataset", "training_attack_types.txt")
+attack_types = {'normal': 'normal'}
+with open(attack_mapping_path, 'r') as f:
+    for line in f:
+        parts = line.strip().split()
+        if len(parts) == 2:
+            attack_types[parts[0]] = parts[1]
+
+# Convert labels to generic categories: normal, dos, probe, r2l, u2r
+y = y.apply(lambda x: attack_types.get(str(x).strip('.'), 'other').upper())
 
 # Split data
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
@@ -36,4 +45,4 @@ model_path = os.path.join(base_dir, "..", "models", "model.pkl")
 os.makedirs(os.path.dirname(model_path), exist_ok=True)
 joblib.dump(model, model_path)
 
-print("✅ Model trained and saved successfully!")
+print("Model trained and saved successfully!")
