@@ -30,10 +30,22 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState([]);
 
-  // ADMIN STATE
-  const [file, setFile] = useState(null);
-  const [status, setStatus] = useState("");
-  const [isTraining, setIsTraining] = useState(false);
+  // SECURITY STATS CALCULATION
+  const totalPackets = logs.length;
+  const totalAttacks = logs.filter(l => l.prediction === "Attack").length;
+  const totalNormal = logs.filter(l => l.prediction === "Normal").length;
+  
+  let systemStatus = "MONITORING";
+  let systemStatusColor = "var(--text-muted)";
+  if (logs.length > 0) {
+    if (logs[0].prediction === "Attack") {
+      systemStatus = "THREAT ALERT";
+      systemStatusColor = "var(--danger)";
+    } else {
+      systemStatus = "SECURE";
+      systemStatusColor = "var(--success)";
+    }
+  }
   
   // USER MANAGEMENT STATE
   const [users, setUsers] = useState([]);
@@ -85,7 +97,6 @@ function App() {
     setLoginData({ username: "", password: "" });
     setResult("");
     setShapData(null);
-    setStatus("");
     setFormData({ duration: "", src_bytes: "", dst_bytes: "", count: "", srv_count: "" });
   };
 
@@ -135,19 +146,6 @@ function App() {
   };
 
   // ADMIN FUNCTIONS
-  const handleUpload = () => {
-    if (file) setStatus(`✅ Dataset selected: ${file.name} ready for processing.`);
-    else setStatus("❌ No file selected.");
-  };
-
-  const handleTrain = () => {
-    setIsTraining(true);
-    setStatus("⏳ Model training in progress... Please wait.");
-    setTimeout(() => {
-      setIsTraining(false);
-      setStatus("✅ Model training completed successfully!");
-    }, 2000);
-  };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -336,27 +334,38 @@ function App() {
           <div className="admin-grid slide-up">
             {/* Left Column: Management */}
             <div className="admin-col">
-              <div className="panel">
+              <div className="panel animate-slide-up">
                 <div className="panel-header">
-                  <UploadIcon />
-                  <h2>Model Management</h2>
+                  <ActivityIcon />
+                  <h2>Security Overview</h2>
                 </div>
+                <p className="panel-desc">Real-time statistics of analyzed traffic logs.</p>
                 
                 <div className="admin-section">
-                  <label className="file-upload-wrapper">
-                    <input type="file" onChange={(e) => setFile(e.target.files[0])} className="file-input" />
-                    <div className="file-upload-ui">
-                      <UploadIcon />
-                      <span>{file ? file.name : "Select training dataset (.csv)"}</span>
+                  <div className="security-stats-grid">
+                    <div className="stat-card">
+                      <span className="stat-label">System Status</span>
+                      <span className="stat-value" style={{ color: systemStatusColor }}>
+                        {systemStatus}
+                      </span>
                     </div>
-                  </label>
-                  <div className="btn-group">
-                    <button onClick={handleUpload} className="secondary-btn">Upload</button>
-                    <button onClick={handleTrain} className="primary-btn" disabled={isTraining}>
-                      {isTraining ? <span className="spinner"></span> : "Train Model"}
-                    </button>
+                    <div className="stat-card">
+                      <span className="stat-label">Traffic Scanned</span>
+                      <span className="stat-value">{totalPackets}</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-label">Intrusions Blocked</span>
+                      <span className="stat-value" style={{ color: totalAttacks > 0 ? "var(--danger)" : "inherit" }}>
+                        {totalAttacks}
+                      </span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-label">Normal Traffic</span>
+                      <span className="stat-value" style={{ color: totalNormal > 0 ? "var(--success)" : "inherit" }}>
+                        {totalNormal}
+                      </span>
+                    </div>
                   </div>
-                  {status && <div className={`status-badge ${status.includes('❌') ? 'error' : ''}`}>{status}</div>}
                 </div>
               </div>
               
