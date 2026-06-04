@@ -69,6 +69,18 @@ cd frontend
 npm install
 npm run dev
 
+## Login Credentials
+
+For testing and demonstration purposes, use the following credentials:
+
+**Admin Access**
+- Username: `admin`
+- Password: `admin123`
+
+**User Access**
+- Username: `user`
+- Password: `1234`
+
 ## Live Demo
 
 [Click Here to Open Project] (https://ids-project-delta.vercel.app)
