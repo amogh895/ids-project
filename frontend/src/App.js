@@ -120,6 +120,10 @@ function App() {
         srv_count: Number(formData.srv_count)
       });
 
+      if (res.data.error) {
+        throw new Error(res.data.error);
+      }
+
       const prediction = res.data.prediction;
       
       setTimeout(() => {
@@ -137,8 +141,9 @@ function App() {
         setLogs([newLog, ...logs]);
       }, 600);
     } catch (err) {
+      const errMsg = err.message || "Connection error. Unable to reach prediction engine.";
       setTimeout(() => {
-        setResult("Error");
+        setResult("Error: " + errMsg);
         setShapData(null);
         setIsLoading(false);
       }, 600);
@@ -277,7 +282,7 @@ function App() {
               <div className={`result-card scale-in ${result === 'Attack' ? 'attack-theme' : result === 'Normal' ? 'normal-theme' : 'error-theme'}`}>
                 {result === "Attack" && <><AlertTriangleIcon /><div><h3>Threat Detected</h3><p>Anomalous network activity found.</p></div></>}
                 {result === "Normal" && <><CheckCircleIcon /><div><h3>Traffic Normal</h3><p>No threats detected in this packet.</p></div></>}
-                {result === "Error" && <><AlertTriangleIcon /><div><h3>Connection Error</h3><p>Unable to reach the prediction engine.</p></div></>}
+                {result.startsWith("Error") && <><AlertTriangleIcon /><div><h3>Analysis Failed</h3><p>{result === "Error" ? "Unable to reach the prediction engine." : result.replace("Error: ", "")}</p></div></>}
               </div>
             )}
 

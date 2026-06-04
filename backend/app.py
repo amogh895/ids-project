@@ -158,22 +158,32 @@ def predict():
 
         if os.path.exists(model_path):
             model = joblib.load(model_path)
-            prediction = model.predict([feature_values])
+            features_arr = np.array([feature_values])
+            prediction = model.predict(features_arr)
             result = "Attack" if prediction[0] == 1 else "Normal"
             
             # SHAP Explainability
             explainer = shap.TreeExplainer(model)
-            shap_values_obj = explainer.shap_values([feature_values])
+            shap_values_obj = explainer.shap_values(features_arr)
             
             # Extract values for the 'Attack' class (index 1) if binary classification list
             if isinstance(shap_values_obj, list):
-                shap_data = shap_values_obj[1][0].tolist()
-            else:
-                # Some versions/models return a 3D array or 2D array
-                if len(shap_values_obj.shape) == 3:
-                    shap_data = shap_values_obj[0, :, 1].tolist()
+                arr = shap_values_obj[1] if len(shap_values_obj) > 1 else shap_values_obj[0]
+                if hasattr(arr, "ndim") and arr.ndim > 1:
+                    shap_data = arr[0].tolist()
+                elif isinstance(arr, list) and len(arr) > 0 and isinstance(arr[0], list):
+                    shap_data = arr[0]
                 else:
+                    shap_data = getattr(arr, "tolist", lambda: list(arr))()
+            elif hasattr(shap_values_obj, "ndim"):
+                if shap_values_obj.ndim == 3:
+                    shap_data = shap_values_obj[0, :, 1].tolist()
+                elif shap_values_obj.ndim == 2:
                     shap_data = shap_values_obj[0].tolist()
+                else:
+                    shap_data = shap_values_obj.tolist()
+            else:
+                shap_data = getattr(shap_values_obj, "tolist", lambda: list(shap_values_obj))()
                     
             if isinstance(explainer.expected_value, (list, np.ndarray)):
                 base_value = float(explainer.expected_value[1] if len(explainer.expected_value) > 1 else explainer.expected_value[0])
