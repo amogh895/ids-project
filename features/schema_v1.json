@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "metadata_columns": [
+    {"name": "flow_id", "dtype": "string", "description": "Unique 5-tuple identifier for the flow"},
+    {"name": "src_ip", "dtype": "string", "description": "Source IP address"},
+    {"name": "dst_ip", "dtype": "string", "description": "Destination IP address"},
+    {"name": "src_port", "dtype": "int64", "description": "Source transport port"},
+    {"name": "dst_port", "dtype": "int64", "description": "Destination transport port"},
+    {"name": "protocol", "dtype": "int64", "description": "IP protocol number (6=TCP, 17=UDP, 1=ICMP)"},
+    {"name": "timestamp", "dtype": "float64", "description": "Unix timestamp in seconds of flow start"},
+    {"name": "day", "dtype": "string", "description": "Observation weekday identifier"}
+  ],
+  "feature_columns": [
+    {"name": "flow_duration", "dtype": "float64", "description": "Total flow duration in seconds"},
+    {"name": "fwd_packets", "dtype": "int64", "description": "Total packets in forward direction"},
+    {"name": "bwd_packets", "dtype": "int64", "description": "Total packets in backward direction"},
+    {"name": "fwd_bytes", "dtype": "int64", "description": "Total bytes sent in forward direction"},
+    {"name": "bwd_bytes", "dtype": "int64", "description": "Total bytes sent in backward direction"},
+    {"name": "fwd_pkt_len_mean", "dtype": "float64", "description": "Mean packet length in forward direction"},
+    {"name": "bwd_pkt_len_mean", "dtype": "float64", "description": "Mean packet length in backward direction"},
+    {"name": "fwd_pkt_len_std", "dtype": "float64", "description": "Standard deviation of packet length in forward direction"},
+    {"name": "bwd_pkt_len_std", "dtype": "float64", "description": "Standard deviation of packet length in backward direction"},
+    {"name": "flow_bytes_per_sec", "dtype": "float64", "description": "Total flow bytes divided by duration"},
+    {"name": "flow_pkts_per_sec", "dtype": "float64", "description": "Total flow packets divided by duration"},
+    {"name": "flow_iat_mean", "dtype": "float64", "description": "Mean inter-arrival time between all packets in flow"},
+    {"name": "flow_iat_std", "dtype": "float64", "description": "Standard deviation of packet inter-arrival times"},
+    {"name": "fwd_iat_mean", "dtype": "float64", "description": "Mean inter-arrival time between forward packets"},
+    {"name": "bwd_iat_mean", "dtype": "float64", "description": "Mean inter-arrival time between backward packets"},
+    {"name": "syn_flag_count", "dtype": "int64", "description": "Number of packets with SYN flag set"},
+    {"name": "fin_flag_count", "dtype": "int64", "description": "Number of packets with FIN flag set"},
+    {"name": "rst_flag_count", "dtype": "int64", "description": "Number of packets with RST flag set"},
+    {"name": "psh_flag_count", "dtype": "int64", "description": "Number of packets with PSH flag set"},
+    {"name": "ack_flag_count", "dtype": "int64", "description": "Number of packets with ACK flag set"},
+    {"name": "init_win_bytes_fwd", "dtype": "int64", "description": "Initial TCP window size in forward direction"},
+    {"name": "init_win_bytes_bwd", "dtype": "int64", "description": "Initial TCP window size in backward direction"}
+  ],
+  "target_column": {
+    "name": "label",
+    "dtype": "string",
+    "classes": ["BENIGN", "DoS", "PortScan", "BruteForce"]
+  }
+}

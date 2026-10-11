@@ -1,0 +1,5 @@
+{
+  "input_dim": 22,
+  "bottleneck_dim": 4,
+  "threshold": 0.8686363697052002
+}

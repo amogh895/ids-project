@@ -1,0 +1,14 @@
+{
+  "threshold": 0.9952544754988797,
+  "pr_auc": 1.0,
+  "roc_auc": 1.0,
+  "precision_attack": 1.0,
+  "recall_attack": 1.0,
+  "f1_attack": 1.0,
+  "precision_benign": 1.0,
+  "recall_benign": 1.0,
+  "f1_benign": 1.0,
+  "recall_at_fpr_1_0_pct": 1.0,
+  "recall_at_fpr_0_1_pct": 1.0,
+  "recall_at_fpr_0_01_pct": 1.0
+}

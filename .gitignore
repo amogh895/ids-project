@@ -1,0 +1,64 @@
+# ============================================================
+# IDS Project — .gitignore
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# --- Virtual Environments ---
+.venv/
+venv/
+ENV/
+
+# --- Data & Models (large files) ---
+data/processed/*.parquet
+data/raw/
+models/*.pkl
+models/*.pt
+models/*.joblib
+!models/.gitkeep
+*.exe
+
+# --- MLOps ---
+mlruns/
+
+# --- Environment / Secrets ---
+.env
+*.db
+
+# --- IDE ---
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# --- Testing ---
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# --- Frontend ---
+node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env.local
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Docker ---
+docker/postgres_data/
+
+# --- Legacy dataset (already in legacy/) ---
+backend/dataset/

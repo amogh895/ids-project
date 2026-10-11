@@ -1,0 +1,30 @@
+{
+  "total_flows": 30000,
+  "attack_prevalence_pct": 3.23,
+  "class_distribution": {
+    "BENIGN": 29031,
+    "BruteForce": 461,
+    "DoS": 371,
+    "PortScan": 137
+  },
+  "day_distribution": {
+    "Monday": 6000,
+    "Tuesday": 6000,
+    "Wednesday": 6000,
+    "Thursday": 6000,
+    "Friday": 6000
+  },
+  "unmatched_timetable_windows": [],
+  "timetable_window_hits": {
+    "TUE-BF-FTP": 105,
+    "TUE-BF-SSH": 122,
+    "WED-DOS-SLOW": 118,
+    "WED-DOS-HULK": 117,
+    "THU-WEB-BF": 234,
+    "FRI-PORTSCAN": 137,
+    "FRI-DDOS": 136
+  },
+  "missing_values": 0,
+  "infinite_values": 0,
+  "schema_verified": true
+}

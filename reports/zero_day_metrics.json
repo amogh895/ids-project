@@ -1,0 +1,26 @@
+{
+  "held_out_class": "PortScan",
+  "n_held_out_test_samples": 137,
+  "n_known_attack_test_samples": 370,
+  "n_benign_test_samples": 11493,
+  "supervised_alone": {
+    "held_out_detection_rate": 1.0,
+    "known_attack_detection_rate": 1.0,
+    "benign_false_alarm_rate": 0.0097
+  },
+  "autoencoder_anomaly": {
+    "held_out_detection_rate": 1.0,
+    "known_attack_detection_rate": 0.3676,
+    "benign_false_alarm_rate": 0.0102
+  },
+  "isolation_forest_baseline": {
+    "held_out_detection_rate": 0.0949,
+    "known_attack_detection_rate": 0.2351,
+    "benign_false_alarm_rate": 0.0088
+  },
+  "hybrid_fusion": {
+    "held_out_detection_rate": 1.0,
+    "known_attack_detection_rate": 1.0,
+    "benign_false_alarm_rate": 0.0196
+  }
+}
